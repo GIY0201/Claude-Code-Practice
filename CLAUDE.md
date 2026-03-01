@@ -1,142 +1,142 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+이 파일은 Claude Code (claude.ai/code)가 이 저장소에서 작업할 때 참고하는 가이드입니다.
 
-## Project Overview
+## 프로젝트 개요
 
-SkyMind is an AI-based UTM (UAV Traffic Management) system implementing real-world ATC concepts at drone scale. It handles autonomous path generation, collision avoidance (DAA), priority management, weather response, and emergency procedures for multiple drones.
+SkyMind는 실제 항공 ATC 개념을 드론 스케일로 구현한 AI 기반 UTM(UAV Traffic Management) 시스템입니다. 자율 경로 생성, 충돌 회피(DAA), 우선순위 관리, 기상 대응, 비상 처리 등을 다수 드론에 대해 수행합니다.
 
-Full project spec: `SKYMIND_PROJECT.md`. **Current status:** Phase 5 complete. All 5 phases implemented. 461 tests pass (3 skip).
+전체 프로젝트 스펙: `SKYMIND_PROJECT.md`. **현재 상태:** Phase 5 완료. 전체 5단계 구현 완료. 461 테스트 통과 (3개 스킵).
 
-## Build & Run Commands
+## 빌드 및 실행 명령어
 
 ```bash
-# All commands assume project root: /home/kiyong/mini_project/Drone_ATC/
+# 모든 명령어는 프로젝트 루트 기준: /home/kiyong/mini_project/Drone_ATC/
 
-# ── Python backend ──
+# ── Python 백엔드 ──
 source .venv/bin/activate
 cd backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# ── Frontend ──
+# ── 프론트엔드 ──
 cd frontend
-npm run dev          # Vite dev server (:5173), proxies /api→:8000, /ws→ws://:8000
+npm run dev          # Vite 개발 서버 (:5173), /api→:8000, /ws→ws://:8000 프록시
 npm run build        # tsc -b && vite build
 npm run lint         # ESLint
 
-# ── Docker (full stack) ──
+# ── Docker (풀 스택) ──
 docker-compose up --build   # db(:5432) + backend(:8000) + frontend(:5173)
 
-# ── Database migrations ──
+# ── 데이터베이스 마이그레이션 ──
 cd backend && alembic upgrade head
 
-# ── Tests (IMPORTANT: run from backend/ directory) ──
+# ── 테스트 (중요: backend/ 디렉토리에서 실행) ──
 cd backend
-python -m pytest ../tests/ -v                                    # All (461 pass, 3 skip)
-python -m pytest ../tests/backend/test_path_engine.py -v         # Single file
-python -m pytest ../tests/backend/test_path_engine.py::TestAStar::test_name -v  # Single test
+python -m pytest ../tests/ -v                                    # 전체 (461 통과, 3 스킵)
+python -m pytest ../tests/backend/test_path_engine.py -v         # 단일 파일
+python -m pytest ../tests/backend/test_path_engine.py::TestAStar::test_name -v  # 단일 테스트
 
-# ── C++ engine (optional, requires g++) ──
+# ── C++ 엔진 (선택사항, g++ 필요) ──
 cd cpp_engine && mkdir -p build && cd build && cmake .. && make -j4
-# If g++ unavailable, ai/cpp_bridge.py auto-falls back to Python implementations
+# g++ 미설치 시 ai/cpp_bridge.py가 자동으로 Python 구현으로 폴백
 ```
 
-## Architecture
+## 아키텍처
 
-### Backend (`backend/`)
+### 백엔드 (`backend/`)
 
-FastAPI app in `main.py` mounts 7 REST routers + 1 WebSocket router. Configuration via pydantic-settings in `config.py` (auto-loads `.env`).
+`main.py`의 FastAPI 앱이 7개 REST 라우터 + 1개 WebSocket 라우터를 마운트. `config.py`에서 pydantic-settings로 설정 (`.env` 자동 로드).
 
-**Layer structure:**
+**계층 구조:**
 
 ```
-API Layer          api/routes/*.py (REST CRUD)  +  api/websocket/telemetry.py (WS streaming)
+API 계층           api/routes/*.py (REST CRUD)  +  api/websocket/telemetry.py (WS 스트리밍)
                    ↓                                ↓
-Domain Logic       core/path_engine/     A*, RRT*, optimizer
-                   core/deconfliction/   CPA, avoidance, tactical DAA, strategic 4D
-                   core/weather/         fetcher (OWM API + mock), analyzer, rerouter
-                   core/emergency/       detector, handler, landing planner
-                   core/airspace/        manager (GeoJSON polygon), altitude layers
-                   core/metrics/         MetricsCollector (performance tracking)
+도메인 로직        core/path_engine/     A*, RRT*, 최적화
+                   core/deconfliction/   CPA, 회피, 전술적 DAA, 전략적 4D
+                   core/weather/         수집 (OWM API + mock), 분석, 재경로
+                   core/emergency/       감지, 처리, 착륙 경로
+                   core/airspace/        관리 (GeoJSON 폴리곤), 고도 레이어
+                   core/metrics/         MetricsCollector (성능 추적)
                    ↓                                ↓
-Simulation         simulator/drone_sim.py          single drone physics (Haversine WGS84)
-                   simulator/multi_drone.py        N-drone + DAA integration
-                   simulator/scenario.py           ScenarioManager (JSON scenario loader)
+시뮬레이션         simulator/drone_sim.py          단일 드론 물리 (Haversine WGS84)
+                   simulator/multi_drone.py        N대 드론 + DAA 통합
+                   simulator/scenario.py           ScenarioManager (JSON 시나리오 로더)
                    ↓                                ↓
-AI/ML              ai/rl/environment.py            Gymnasium env (24D obs, 3D action)
-                   ai/rl/{reward,agent,train}.py   PPO via SB3 + curriculum reward
-                   ai/cpp_bridge.py                C++ engine wrapper with Python fallback
-                   ai/llm/controller.py            LLM ATC controller (NL → commands)
-                   ai/llm/parser.py                NL → FlightPlanCreate (Claude tool_use)
-                   ai/llm/briefing.py              System state → Korean briefing
-                   ai/llm/client.py                Anthropic API wrapper (mock mode)
+AI/ML              ai/rl/environment.py            Gymnasium 환경 (24D 관측, 3D 행동)
+                   ai/rl/{reward,agent,train}.py   PPO (SB3) + 커리큘럼 보상
+                   ai/cpp_bridge.py                C++ 엔진 래퍼 (Python 폴백)
+                   ai/llm/controller.py            LLM 관제사 (자연어 → 명령)
+                   ai/llm/parser.py                자연어 → FlightPlanCreate (Claude tool_use)
+                   ai/llm/briefing.py              시스템 상태 → 한국어 브리핑
+                   ai/llm/client.py                Anthropic API 래퍼 (mock 모드)
                    ↓
-Data               models/*.py (Pydantic)  ↔  db/orm_models.py (SQLAlchemy ORM)
-                   db/crud.py (conversion: _*_orm_to_pydantic())
+데이터             models/*.py (Pydantic)  ↔  db/orm_models.py (SQLAlchemy ORM)
+                   db/crud.py (변환: _*_orm_to_pydantic())
 ```
 
-**Key design decisions:**
-- Pydantic models (API contracts) are **separate** from ORM models (DB). Conversion in `crud.py`.
-- WebSocket `/ws/multi-telemetry` runs the full simulation loop: `MultiDroneSim.tick_with_daa()` → telemetry + CPA + avoidance + emergency detection + weather (10s interval) + metrics collection. Sends `{"event": "metrics"}` on completion.
-- `WeatherFetcher` auto-switches to mock mode when no `OPENWEATHER_API_KEY` is set.
-- `EmergencyDetector` tracks per-drone state to prevent duplicate alerts; call `.update(telemetry)` (not `.check()`).
-- `LLMClient` / all LLM modules auto-switch to mock mode when `ANTHROPIC_API_KEY` is empty (same pattern as `WeatherFetcher`).
-- `NOTAMParser` converts natural language to `AirspaceZoneCreate` with circle polygon geometry.
+**주요 설계 결정:**
+- Pydantic 모델(API 계약)과 ORM 모델(DB)은 **분리**. `crud.py`에서 변환.
+- WebSocket `/ws/multi-telemetry`가 전체 시뮬레이션 루프 실행: `MultiDroneSim.tick_with_daa()` → 텔레메트리 + CPA + 회피 + 비상 감지 + 기상 (10초 주기) + 메트릭 수집. 완료 시 `{"event": "metrics"}` 전송.
+- `WeatherFetcher`는 `OPENWEATHER_API_KEY` 미설정 시 자동으로 mock 모드 전환.
+- `EmergencyDetector`는 드론별 상태를 추적하여 중복 알림 방지. `.update(telemetry)` 호출 (`.check()` 아님).
+- `LLMClient` / 모든 LLM 모듈은 `ANTHROPIC_API_KEY` 비어있으면 mock 모드 전환 (`WeatherFetcher`와 동일 패턴).
+- `NOTAMParser`는 자연어를 원형 폴리곤 geometry의 `AirspaceZoneCreate`로 변환.
 
-### Frontend (`frontend/src/`)
+### 프론트엔드 (`frontend/src/`)
 
-React 18 + TypeScript + CesiumJS (resium) + Zustand + TailwindCSS, built with Vite.
+React 18 + TypeScript + CesiumJS (resium) + Zustand + TailwindCSS, Vite로 빌드.
 
-**State flow:**
+**상태 흐름:**
 ```
-SimulationPanel → useSimulation / useMultiSimulation (WebSocket hooks)
-                  → useDroneState (Zustand store: drones, trails, conflicts, weather, alerts)
-                  → CesiumViewer (DroneTracker, RouteRenderer, WeatherOverlay, LandingZoneRenderer)
-                  → Dashboard (WeatherPanel, ConflictPanel, EmergencyAlertPanel, DroneCards)
-ChatPanel (floating, bottom-left) → REST /api/chat/message → ATCController → response display
+SimulationPanel → useSimulation / useMultiSimulation (WebSocket 훅)
+                  → useDroneState (Zustand 스토어: drones, trails, conflicts, weather, alerts)
+                  → CesiumViewer (DroneTracker, RouteRenderer, WeatherOverlay, LandingZoneRenderer, AirspaceLayer)
+                  → Dashboard (WeatherPanel, ConflictPanel, EmergencyAlertPanel, MetricsPanel, DroneCards)
+ChatPanel (플로팅, 좌측 하단) → REST /api/chat/message → ATCController → 응답 표시
 ```
 
-**Vite proxy** (`vite.config.ts`): `/api` → `http://localhost:8000`, `/ws` → `ws://localhost:8000`.
+**Vite 프록시** (`vite.config.ts`): `/api` → `http://localhost:8000`, `/ws` → `ws://localhost:8000`.
 
-### C++ Engine (`cpp_engine/`)
+### C++ 엔진 (`cpp_engine/`)
 
-C++17 ports of A*, RRT*, path optimizer with pybind11 bindings (`skymind_cpp` module). Build requires `cmake` + `g++`. Python fallback via `ai/cpp_bridge.py` when the native module is unavailable.
+A*, RRT*, 경로 최적화의 C++17 포팅 + pybind11 바인딩 (`skymind_cpp` 모듈). `cmake` + `g++` 필요. 네이티브 모듈 미사용 시 `ai/cpp_bridge.py`가 Python으로 자동 폴백.
 
-### Tests (`tests/backend/`)
+### 테스트 (`tests/backend/`)
 
-- `conftest.py`: SQLite in-memory DB, FastAPI `TestClient`, auto create/drop tables per test via `app.dependency_overrides[get_db]`.
-- Tests add `backend/` to `sys.path` — must run from `backend/` directory.
-- RL agent tests (PPO training) are CPU-intensive; use small `total_timesteps` and `max_steps` in test configs.
+- `conftest.py`: SQLite 인메모리 DB, FastAPI `TestClient`, 테스트별 자동 테이블 생성/삭제 (`app.dependency_overrides[get_db]`).
+- 테스트가 `backend/`를 `sys.path`에 추가 — **반드시 `backend/` 디렉토리에서 실행**.
+- RL 에이전트 테스트 (PPO 학습)는 CPU 부하가 큼. 테스트 설정에서 작은 `total_timesteps`와 `max_steps` 사용.
 
-## Domain Rules
+## 도메인 규칙
 
-- **Coordinates:** WGS84 (EPSG:4326). Distances via Haversine. Meter conversion: `111320 * cos(lat)`.
-- **Default region:** Seoul (37.5665°N, 126.9780°E).
-- **Separation minimums:** horizontal 100m, vertical 30m.
-- **Altitude layers:** East-bound (0°–180°) → odd layers, West-bound (180°–360°) → even layers. Range 30m–400m, 10m step.
-- **Avoidance priority:** speed reduction → altitude change → lateral offset → hold.
-- **Drone priority:** EMERGENCY > HIGH > NORMAL > LOW (lower priority yields).
-- **Airspace zones:** RESTRICTED / CONTROLLED / FREE / EMERGENCY_ONLY.
-- **Weather limits:** wind >20 m/s, rain >15 mm/h, visibility <500m → GROUNDED.
+- **좌표계:** WGS84 (EPSG:4326). 거리 계산은 Haversine. 미터 변환: `111320 * cos(lat)`.
+- **기본 지역:** 서울 (37.5665°N, 126.9780°E).
+- **분리 최소값:** 수평 100m, 수직 30m.
+- **고도 레이어:** 동향 (0°–180°) → 홀수 레이어, 서향 (180°–360°) → 짝수 레이어. 범위 30m–400m, 10m 단위.
+- **회피 우선순위:** 속도 감소 → 고도 변경 → 수평 오프셋 → 정지.
+- **드론 우선순위:** EMERGENCY > HIGH > NORMAL > LOW (낮은 우선순위가 양보).
+- **공역 구역:** RESTRICTED / CONTROLLED / FREE / EMERGENCY_ONLY.
+- **기상 제한:** 풍속 >20 m/s, 강수 >15 mm/h, 시정 <500m → GROUNDED.
 
-## Development Conventions
+## 개발 규칙
 
-- Phased development: Phase N complete before Phase N+1 (see `SKYMIND_PROJECT.md`).
-- Commits: Conventional Commits (`feat:`, `fix:`, `refactor:`).
-- Language: Korean comments in source code, English API/types.
+- 단계적 개발: Phase N 완료 후 Phase N+1 진행 (`SKYMIND_PROJECT.md` 참조).
+- 커밋: Conventional Commits (`feat:`, `fix:`, `refactor:`).
+- 언어: 소스 코드 주석은 한국어, API/타입은 영어.
 
-## Known Gotchas
+## 주의사항
 
-- **Do NOT use `asyncio.to_thread` inside WebSocket handlers** — it deadlocks in Starlette's TestClient. Call sync functions directly (acceptable since weather fetcher uses mock/cache in tests).
-- **Tests must run from `backend/`** directory: `cd backend && python -m pytest ../tests/ -v`. The `conftest.py` adds `backend/` to `sys.path`.
-- **3 tests are expected to skip** (C++ engine not compiled) — this is normal when g++ is not installed.
+- **WebSocket 핸들러에서 `asyncio.to_thread` 사용 금지** — Starlette TestClient에서 데드락 발생. 동기 함수 직접 호출 (기상 수집기는 테스트에서 mock/캐시 사용하므로 문제 없음).
+- **테스트는 반드시 `backend/` 디렉토리에서 실행**: `cd backend && python -m pytest ../tests/ -v`. `conftest.py`가 `backend/`를 `sys.path`에 추가함.
+- **3개 테스트 스킵은 정상** (C++ 엔진 미컴파일) — g++ 미설치 시 나타나는 정상 동작.
 
-## Environment Variables
+## 환경 변수
 
-See `.env.example`. Key settings:
-- `DATABASE_URL` — PostgreSQL connection string
-- `OPENWEATHER_API_KEY` — empty = mock mode (safe for dev/test)
-- `VITE_CESIUM_ION_TOKEN` — CesiumJS Ion access token (frontend `.env`)
-- `SIM_TICK_RATE_HZ` (default 10) — simulation ticks per second
-- `SEPARATION_HORIZONTAL_M` (100), `SEPARATION_VERTICAL_M` (30) — DAA thresholds
-- `ANTHROPIC_API_KEY` — empty = mock mode (safe for dev/test)
+`.env.example` 참조. 주요 설정:
+- `DATABASE_URL` — PostgreSQL 연결 문자열
+- `OPENWEATHER_API_KEY` — 비어있으면 mock 모드 (개발/테스트에 안전)
+- `VITE_CESIUM_ION_TOKEN` — CesiumJS Ion 접근 토큰 (프론트엔드 `.env`)
+- `SIM_TICK_RATE_HZ` (기본값 10) — 시뮬레이션 틱 속도
+- `SEPARATION_HORIZONTAL_M` (100), `SEPARATION_VERTICAL_M` (30) — DAA 임계값
+- `ANTHROPIC_API_KEY` — 비어있으면 mock 모드 (개발/테스트에 안전)
