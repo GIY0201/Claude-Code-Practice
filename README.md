@@ -1,7 +1,7 @@
 # SkyMind — AI 드론 항공 관제 시스템
 
 실제 항공 ATC(Air Traffic Control) 개념을 드론 스케일로 구현한 AI 기반 UTM(UAV Traffic Management) 시스템입니다. 다수 드론의 항로를 자동 생성하고, 충돌 감지 및 회피, 기상 대응, 비상 처리까지 실시간으로 수행합니다.
-![Uploading image.png…]()
+
 
 
 ## 주요 기능
