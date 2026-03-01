@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Cesium Viewer 내부 모든 요소의 z-index를 제한 */
+.cesium-viewer,
+.cesium-viewer * {
+  z-index: auto !important;
+}
+
+/* UI 오버레이 패널 */
+.ui-overlay {
+  z-index: 100000 !important;
+  position: absolute !important;
+}

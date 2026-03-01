@@ -226,7 +226,7 @@ function SimulationPanel() {
   const droneList = Array.from(drones.values());
 
   return (
-    <div className="absolute top-14 left-4 w-72 bg-gray-800/95 rounded-lg shadow-xl border border-gray-700 text-sm max-h-[calc(100vh-80px)] overflow-y-auto">
+    <div className="ui-overlay top-14 left-4 w-72 bg-gray-800/95 rounded-lg shadow-xl border border-gray-700 text-sm max-h-[calc(100vh-80px)] overflow-y-auto">
       {/* 헤더 */}
       <div className="px-4 py-3 border-b border-gray-700">
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">

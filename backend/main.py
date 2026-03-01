@@ -9,7 +9,10 @@ from api.websocket import telemetry
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup — 테이블 자동 생성 (마이그레이션 파일 없을 때 대비)
+    from db.database import engine, Base
+    import db.orm_models  # noqa: F401
+    Base.metadata.create_all(bind=engine)
     yield
     # Shutdown
 

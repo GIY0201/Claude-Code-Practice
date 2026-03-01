@@ -160,7 +160,7 @@ function ChatPanel() {
     return (
       <button
         onClick={() => setChatOpen(true)}
-        className="absolute bottom-4 left-4 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center transition-colors z-10"
+        className="ui-overlay bottom-4 left-4 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center transition-colors"
         title="AI Controller"
       >
         <svg
@@ -182,7 +182,7 @@ function ChatPanel() {
 
   // ── 열린 상태: 채팅 패널 ──
   return (
-    <div className="absolute bottom-4 left-4 w-96 max-h-[calc(100vh-100px)] bg-gray-800/95 rounded-lg shadow-xl border border-gray-700 flex flex-col z-10">
+    <div className="ui-overlay bottom-4 left-4 w-96 max-h-[calc(100vh-100px)] bg-gray-800/95 rounded-lg shadow-xl border border-gray-700 flex flex-col">
       {/* 헤더 */}
       <div className="px-4 py-2.5 bg-gray-900/50 flex items-center justify-between border-b border-gray-700 shrink-0 rounded-t-lg">
         <div className="flex items-center gap-2">

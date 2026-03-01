@@ -17,7 +17,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="absolute top-14 right-4 w-80 max-h-[calc(100vh-80px)] bg-gray-800/95 rounded-lg shadow-xl border border-gray-700 text-sm overflow-y-auto">
+    <div className="ui-overlay top-14 right-4 w-80 max-h-[calc(100vh-80px)] bg-gray-800/95 rounded-lg shadow-xl border border-gray-700 text-sm overflow-y-auto">
       {/* 기상 정보 */}
       <WeatherPanel />
 
