@@ -1,0 +1,60 @@
+{
+  "name": "multi_delivery",
+  "description": "서울 시내 5대 드론 동시 배송 — 다양한 출발지/도착지, 혼잡 경로 교차",
+  "drones": [
+    {
+      "drone_id": "DEL-001",
+      "waypoints": [
+        {"lat": 37.5547, "lon": 126.9707, "alt_m": 80},
+        {"lat": 37.5400, "lon": 126.9800, "alt_m": 100},
+        {"lat": 37.5172, "lon": 126.9950, "alt_m": 100},
+        {"lat": 37.4979, "lon": 127.0276, "alt_m": 80}
+      ],
+      "speed_ms": 10,
+      "priority": "NORMAL"
+    },
+    {
+      "drone_id": "DEL-002",
+      "waypoints": [
+        {"lat": 37.5800, "lon": 127.0000, "alt_m": 120},
+        {"lat": 37.5600, "lon": 127.0100, "alt_m": 120},
+        {"lat": 37.5400, "lon": 127.0200, "alt_m": 120},
+        {"lat": 37.5140, "lon": 127.0600, "alt_m": 100}
+      ],
+      "speed_ms": 12,
+      "priority": "NORMAL"
+    },
+    {
+      "drone_id": "DEL-003",
+      "waypoints": [
+        {"lat": 37.5665, "lon": 126.9780, "alt_m": 60},
+        {"lat": 37.5500, "lon": 126.9900, "alt_m": 80},
+        {"lat": 37.5340, "lon": 127.0000, "alt_m": 80},
+        {"lat": 37.5200, "lon": 127.0100, "alt_m": 60}
+      ],
+      "speed_ms": 8,
+      "priority": "LOW"
+    },
+    {
+      "drone_id": "DEL-004",
+      "waypoints": [
+        {"lat": 37.5700, "lon": 126.9600, "alt_m": 140},
+        {"lat": 37.5500, "lon": 126.9750, "alt_m": 140},
+        {"lat": 37.5300, "lon": 126.9900, "alt_m": 140},
+        {"lat": 37.5100, "lon": 127.0050, "alt_m": 120}
+      ],
+      "speed_ms": 10,
+      "priority": "HIGH"
+    },
+    {
+      "drone_id": "EMG-001",
+      "waypoints": [
+        {"lat": 37.5600, "lon": 126.9850, "alt_m": 60},
+        {"lat": 37.5450, "lon": 126.9750, "alt_m": 60},
+        {"lat": 37.5300, "lon": 126.9650, "alt_m": 60}
+      ],
+      "speed_ms": 20,
+      "priority": "EMERGENCY"
+    }
+  ]
+}

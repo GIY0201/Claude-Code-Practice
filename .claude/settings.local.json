@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(sudo apt:*)",
+      "Bash(dpkg:*)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(source:*)",
+      "Bash(ls:*)",
+      "Bash(kill 21833:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 5 npx vite:*)",
+      "Bash(python:*)",
+      "Bash(pip3 install:*)",
+      "Bash(conda info:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(PYTHONPATH=backend python:*)",
+      "Bash(PYTHONPATH=backend python3:*)",
+      "Bash(PYTHONPATH=backend .venv/bin/python:*)",
+      "Bash(npx vite:*)",
+      "Bash(wc:*)",
+      "Bash(apt list --installed)",
+      "Bash(conda install:*)",
+      "Bash(/tmp/tree_output.txt:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

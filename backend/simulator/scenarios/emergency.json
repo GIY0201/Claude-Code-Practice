@@ -1,0 +1,48 @@
+{
+  "name": "emergency_complex",
+  "description": "복합 비상 시나리오 — 배터리 부족 드론 + 교차 경로 + 우선순위 혼합",
+  "drones": [
+    {
+      "drone_id": "EMG-LOW",
+      "waypoints": [
+        {"lat": 37.5600, "lon": 126.9750, "alt_m": 100},
+        {"lat": 37.5500, "lon": 126.9850, "alt_m": 100},
+        {"lat": 37.5400, "lon": 126.9950, "alt_m": 100},
+        {"lat": 37.5300, "lon": 127.0050, "alt_m": 100}
+      ],
+      "speed_ms": 10,
+      "battery_percent": 20,
+      "priority": "NORMAL"
+    },
+    {
+      "drone_id": "EMG-CROSS1",
+      "waypoints": [
+        {"lat": 37.5650, "lon": 126.9700, "alt_m": 100},
+        {"lat": 37.5500, "lon": 126.9900, "alt_m": 100},
+        {"lat": 37.5350, "lon": 127.0100, "alt_m": 100}
+      ],
+      "speed_ms": 12,
+      "priority": "NORMAL"
+    },
+    {
+      "drone_id": "EMG-CROSS2",
+      "waypoints": [
+        {"lat": 37.5350, "lon": 126.9700, "alt_m": 100},
+        {"lat": 37.5500, "lon": 126.9900, "alt_m": 100},
+        {"lat": 37.5650, "lon": 127.0100, "alt_m": 100}
+      ],
+      "speed_ms": 12,
+      "priority": "HIGH"
+    },
+    {
+      "drone_id": "EMG-RESP",
+      "waypoints": [
+        {"lat": 37.5700, "lon": 127.0000, "alt_m": 60},
+        {"lat": 37.5500, "lon": 126.9900, "alt_m": 60},
+        {"lat": 37.5300, "lon": 126.9800, "alt_m": 60}
+      ],
+      "speed_ms": 20,
+      "priority": "EMERGENCY"
+    }
+  ]
+}
